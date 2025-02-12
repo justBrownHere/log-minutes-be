@@ -8,7 +8,7 @@ client = OpenAI(api_key = api_key)
 def transcribe_audio(audio_file: str) -> str:
     try:
         with open(audio_file, "rb") as file:
-            transcribe_audio = client.audio.transcription.creaete(
+            transcribe_audio = client.audio.transcription.create(
                 model = "whisper-1",
                 file = file
             )
