@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from utilize import trim_audio
 from transcription import transcribe_audio
 import os
-import datetime
 from fastapi.responses import JSONResponse
 import tempfile
 
@@ -36,8 +35,10 @@ async def transcrible(audio_file: UploadFile = File(...))->str:
 
     return JSONResponse(
         conntent={
+            
             "transcription": transcribe_text
         })
+
 
 @app.get("/")
 async def root():
