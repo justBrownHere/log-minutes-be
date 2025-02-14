@@ -1,5 +1,8 @@
 fastapi
-openai
+openai==1.63.0
+torch==2.5.0
+onnxruntime
+pyannote.audio==3.3.2
 uvicorn
 tempfile
 pydub
