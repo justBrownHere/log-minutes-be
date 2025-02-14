@@ -14,4 +14,4 @@ def transcribe_audio(audio_file: str) -> str:
             )
         return transcribe_audio.text
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error transcrible: {e}")
