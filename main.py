@@ -36,20 +36,20 @@ async def diarize(audio_file: UploadFile = File(...))->list:
         prompt_context = ""
 
         for dia in diarization_result:
-            output_file_path = trim_audio(tmp_audio_path, dia["start_time"], dia["end_time"])
-            trancrible = transcribe_audio(output_file_path)
-            prompt_context += trancrible + "\n" 
-            system_prompt = f"""
-            Your task is to correct any spelling discrepancies in the transcribed text.
-            Only add necessary punctuation such as periods, commas, and capitalization, and use only the context provided.
-            """
-            results.append({
-                'speaker': dia['speaker'],
-                'start_time': dia['start_time'],
-                'end_time': dia['end_time'],
-                'content': post_process_transcript(trancrible, system_prompt),
-            })
-
+            if dia["end_time"] - dia["start_time"] >= 0.1:
+                output_file_path = trim_audio(tmp_audio_path, dia["start_time"], dia["end_time"])
+                trancrible = transcribe_audio(output_file_path)
+                prompt_context += trancrible + "\n" 
+                system_prompt = f"""
+                Your task is to correct any spelling discrepancies in the transcribed text.
+                Only add necessary punctuation such as periods, commas, and capitalization, and use only the context provided.
+                """
+                results.append({
+                    'speaker': dia['speaker'],
+                    'start_time': dia['start_time'],
+                    'end_time': dia['end_time'],
+                    'content': post_process_transcript(trancrible, system_prompt),
+                })
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Diarization API Error: {str(e)}")
     finally:
