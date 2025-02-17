@@ -3,21 +3,23 @@ from pyannote.core import Annotation
 import re
 from datetime import datetime
 
-def time_to_seconds(time: str) -> float:
+def time_to_seconds(time) -> float:
     try:
+        
         time =  datetime.strptime(time, "%H:%M:%S.%f")
         return time.hour * 3600 + time.minute * 60 + time.second + time.microsecond / 1e6
     except Exception as e:
         print(f"Error convert time: {e}")
 
 def trim_audio(audio_file_path: str,
-                start_time: int,
-                end_time: int)->str:
+                start_time: float,
+                end_time: float)->str:
     
     try:
+        print(f"Start time: {(start_time)}\n End time : {(end_time)}")
         audio = AudioSegment.from_wav(audio_file_path)
-        start_time_ms = time_to_seconds(start_time) * 1000
-        end_time_ms = time_to_seconds(end_time) * 1000
+        start_time_ms = start_time * 1000
+        end_time_ms = end_time * 1000
 
         trimmed_audio = audio[start_time_ms: end_time_ms]
         output_file_path = f"{audio_file_path}_trimmed.wav"
@@ -27,6 +29,7 @@ def trim_audio(audio_file_path: str,
         return output_file_path
     except Exception as e:
         print(f"Error Trim: {e}")
+        raise e
 
 def format_diarization_result(diarization_result: Annotation) -> list:
     try:

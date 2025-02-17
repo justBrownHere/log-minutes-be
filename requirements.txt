@@ -6,3 +6,5 @@ pyannote.audio==3.3.2
 uvicorn
 tempfile
 pydub
+python-multipart==0.0.20
+python-dotenv

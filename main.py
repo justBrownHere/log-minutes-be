@@ -7,6 +7,8 @@ import os
 from fastapi.responses import JSONResponse
 import tempfile
 from diarization import diarize_audio
+from post_processing import post_process_transcript
+
 
 
 app = FastAPI()
@@ -23,18 +25,36 @@ app.add_middleware(
 async def diarize(audio_file: UploadFile = File(...))->list:
     try:
         results = []
-        dia = diarize_audio(audio_file)
+        suffix = os.path.splitext(audio_file.filename)[1] if audio_file.filename else ""
+        with tempfile.NamedTemporaryFile(delete=False, suffix = suffix) as tmp_audio:
+            content = await audio_file.read()
+            tmp_audio.write(content)
+            tmp_audio_path = tmp_audio.name
+        dia = diarize_audio(tmp_audio_path)
         diarization_result = format_diarization_result(dia)
+
+        prompt_context = ""
+
         for dia in diarization_result:
-            output_file_path = trim_audio(audio_file, dia['speaker'] ,dia["start_time"], dia["end_time"])
-            audio_transcription = open(output_file_path, "rb")
-            trancrible = transcribe_audio(audio_transcription)
+            output_file_path = trim_audio(tmp_audio_path, dia["start_time"], dia["end_time"])
+            trancrible = transcribe_audio(output_file_path)
+            prompt_context += trancrible + "\n" 
+            system_prompt = f"""
+            Your task is to correct any spelling discrepancies in the transcribed text.
+            Only add necessary punctuation such as periods, commas, and capitalization, and use only the context provided.
+            """
             results.append({
                 'speaker': dia['speaker'],
-                'content': trancrible,
+                'start_time': dia['start_time'],
+                'end_time': dia['end_time'],
+                'content': post_process_transcript(trancrible, system_prompt),
             })
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Diarization API Error: {str(e)}")
+    finally:
+        if 'tmp_audio_path' in locals() or os.path.exists(tmp_audio_path):
+            os.remove(tmp_audio_path)
     return JSONResponse(
         content={
             "results": results
@@ -55,11 +75,10 @@ async def transcrible(audio_file: UploadFile = File(...))->str:
         raise HTTPException(status_code=500, detail=f"Transcription API error: {str(e)}")
     finally:
         if 'tmp_audio_path' in locals() or os.path.exists(tmp_audio_path):
-            os.remove(tmp_audio)
+            os.remove(tmp_audio_path)
 
     return JSONResponse(
-        conntent={
-            
+        content={
             "transcription": transcribe_text
         })
 
